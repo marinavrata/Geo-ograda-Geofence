@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto" >
+
+    <item
+        android:id="@+id/stvori"
+        android:title="Stvori geo-ogradu"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/obriši"
+        android:title="Obriši geo-ogradu"
+        app:showAsAction="never" />
+    <item
+        android:id="@+id/sakrij"
+        android:title="Obriši sve oznake"
+        app:showAsAction="never"/>
+
+    <item
+        android:id="@+id/mapaNormalna"
+        android:title="Standardno"
+        app:showAsAction="never"/>
+    <item
+        android:id="@+id/mapaSatelit"
+        android:title="Satelit"
+        app:showAsAction="never"/>
+    <item
+        android:id="@+id/mapaHibrid"
+        android:title="Hibrid"
+        app:showAsAction="never"/>
+    <item
+        android:id="@+id/mapaTeren"
+        android:title="Teren"
+        app:showAsAction="never"/>
+</menu>
+
