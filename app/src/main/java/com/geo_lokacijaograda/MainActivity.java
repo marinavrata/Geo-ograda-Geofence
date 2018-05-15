@@ -25,7 +25,9 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.app.AlertDialog;
@@ -75,24 +77,23 @@ public class MainActivity extends AppCompatActivity
     private MapFragment mapFragment;
     private static final String NOTIFICATION_MSG = "NOTIFICATION MSG";
     public float geofenceRadius = 0;
+    private Switch switchSave;
 
 
-    // Stvaranje Intent-a, spaja komponente jedne aplikacije/aktivnosti sa drugima
+    // Stvaranje Intent-a, spaja komponente jedne aplikacije/Activity-a sa drugima
     public static Intent makeNotificationIntent(Context context, String msg) {
         Intent intent = new Intent(context, MainActivity.class);
         intent.putExtra(NOTIFICATION_MSG, msg);
         return intent;
     }
 
-
     ActionBar actionBar;
     private Button mButton;
     private EditText mEdit;
 
 
-    // metoda koja se poziva kada se aktivnost pokreće
     @Override
-    protected void onCreate(Bundle savedInstanceState) {                                              //za slanje podataka između Aktivitija
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
@@ -105,64 +106,37 @@ public class MainActivity extends AppCompatActivity
         actionBar = getSupportActionBar();
         actionBar.setBackgroundDrawable(new ColorDrawable(Color.parseColor("#0176a0")));    //postavljanje boje pozadine
 
-        Toast.makeText(getApplicationContext(),"Dugo držite da biste stvorili marker!",Toast.LENGTH_LONG).show();
+        Toast.makeText(getApplicationContext(), "Dugo držite da biste stvorili marker", Toast.LENGTH_LONG).show();
 
         mButton = (Button) findViewById(R.id.btnOK);
         mEdit = (EditText) findViewById(R.id.etRadijus);
-        final String value = mEdit.getText().toString();                                               //dobivamo vrijednost od onog što je korisnik upisao
+        final String value = mEdit.getText().toString();
+
+        switchSave = (Switch) findViewById(R.id.switch1);
 
         getRadius();
     }
-
-    // upisivanje radijusa za geo-ogradu
-    public void getRadius() {
-        mButton.setOnClickListener(
-                new View.OnClickListener() {
-                    @Override
-                    public void onClick(View v) {
-                        conditionsInput();
-                    }
-                }
-        );
-    }
-
-
-    // uvjeti kod upisa u editText
-    public void conditionsInput(){
-        if (mEdit.getText().length() < 1) {
-            Toast.makeText(getApplicationContext(), "Niste upisali radijus!", Toast.LENGTH_LONG).show();
-            return;
-        }
-
-        if (Float.parseFloat(mEdit.getText().toString()) > 3000 || Float.parseFloat(mEdit.getText().toString()) < 30) {                                                                                                                                               //ograničenja unosa radijusa
-            Toast.makeText(getApplicationContext(), "Upišite broj između 30 i 3000 metara", Toast.LENGTH_LONG).show();
-        }else {
-            geofenceRadius = Float.valueOf(String.valueOf(mEdit.getText()));
-            Toast.makeText(getApplicationContext(), "Upisali ste radijus od " + mEdit.getText() + "m", Toast.LENGTH_LONG).show();
-        }
-    }
-
-
 
     // započini sa procesom kreiranja geo-ograde
     private void startGeofence() {
         Log.i(TAG, "startGeofence()");
         if (geoFenceMarker != null) {
-            Geofence geofence = createGeofence(geoFenceMarker.getPosition(), geofenceRadius);                                                      //stvori geo-ogradu sa oznakom i radijusom
-            GeofencingRequest geofenceRequest = createGeofenceRequest(geofence);                                                                    //pitaj za zahtjev
+            Geofence geofence = createGeofence(geoFenceMarker.getPosition(), geofenceRadius);
+            GeofencingRequest geofenceRequest = createGeofenceRequest(geofence);
             addGeofence(geofenceRequest);
-        }else {
+        } else {
             Log.e(TAG, "Geofence marker is null");
         }
     }
+
 
     // napravi geo-ogradu
     private Geofence createGeofence(LatLng latLng, float radius) {
         return new Geofence.Builder()
                 .setRequestId(GEOFENCE_REQ_ID)
                 .setCircularRegion(latLng.latitude, latLng.longitude, radius)
-                .setExpirationDuration(GEO_DURATION)                                //geo-ograda će biti automatski uklonjena nakon ovog perioda
-                .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER              //postavlja prijelaze (ulaz/izlaz)
+                .setExpirationDuration(GEO_DURATION)                                    //geo-ograda će biti automatski uklonjena nakon ovog perioda
+                .setTransitionTypes(Geofence.GEOFENCE_TRANSITION_ENTER                  //postavlja prijelaze (ulaz/izlaz)
                         | Geofence.GEOFENCE_TRANSITION_EXIT)
                 .build();
     }
@@ -182,16 +156,42 @@ public class MainActivity extends AppCompatActivity
         geoFenceLimits = map.addCircle(circleOptions);
     }
 
+    // upisivanje radijusa za geo-ogradu
+    public void getRadius() {
+        mButton.setOnClickListener(
+                new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        conditionsInput();
+                    }
+                }
+        );
+    }
+
+    // uvjeti kod upisa radijusa u editText
+    public void conditionsInput() {
+        if (mEdit.getText().length() < 1) {
+            Toast.makeText(getApplicationContext(), "Niste upisali radijus!", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        if (Float.parseFloat(mEdit.getText().toString()) > 3000 || Float.parseFloat(mEdit.getText().toString()) < 30) {                                                                                                                                               //ograničenja unosa radijusa
+            Toast.makeText(getApplicationContext(), "Upišite broj između 30 i 3000 metara", Toast.LENGTH_LONG).show();
+        } else {
+            geofenceRadius = Float.valueOf(String.valueOf(mEdit.getText()));
+            Toast.makeText(getApplicationContext(), "Upisali ste radijus od " + mEdit.getText() + "m", Toast.LENGTH_LONG).show();
+        }
+    }
 
 
     // započmi google mapu
     private void initGMaps() {
-        mapFragment = (MapFragment) getFragmentManager().findFragmentById(R.id.map);            //stavljanje mape u app
+        mapFragment = (MapFragment) getFragmentManager().findFragmentById(R.id.map);                    //stavljanje mape u app
         mapFragment.getMapAsync(this);
     }
 
 
-    // stvaranje GoogleApiClient objekta
+    // stvaranje GoogleApiClient-a
     private void createGoogleApi() {
         Log.d(TAG, "createGoogleApi()");
         if (googleApiClient == null) {
@@ -204,18 +204,18 @@ public class MainActivity extends AppCompatActivity
     }
 
 
-    // kada se aktiviti pokreće, poziva se GoogleApiClient za konekciju
+    // kada se Activity pokrene provjerava dopuštenje za pristup lokaciji, GoogleApiClient se povezuje
     @Override
     protected void onStart() {
         super.onStart();
-        if(checkPermission() == false) {
+        if (!checkPermission()) {
             askPermission();
         }
         googleApiClient.connect();
     }
 
 
-    // kada activity prestaje sa radom, poziva se GoogleApiClient za odspajanje
+    // kada Activity prestaje sa radom, poziva se GoogleApiClient za odspajanje
     @Override
     protected void onStop() {
         super.onStop();
@@ -226,7 +226,7 @@ public class MainActivity extends AppCompatActivity
     // stvaranje izbornika
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        MenuInflater inflater = getMenuInflater();                                 //objekt koji kreira izbornik iz xml resursa
+        MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.menu, menu);
         return true;
     }
@@ -261,27 +261,26 @@ public class MainActivity extends AppCompatActivity
             case R.id.mapaHibrid:
                 map.setMapType(GoogleMap.MAP_TYPE_HYBRID);
                 break;
-            default:break;
+            default:
+                break;
         }
         return super.onOptionsItemSelected(item);
     }
 
 
-    // uvjeti stvaranje ograde s obzirom na unos radijusa
-    public void conditionsMenu(){
-        if(geofenceRadius >= 30 && geofenceRadius <= 3000) {
+    // uvjeti za stvaranje ograde s obzirom na unos radijusa
+    public void conditionsMenu() {
+        if (geofenceRadius >= 30 && geofenceRadius <= 3000) {
             startGeofence();
             Toast.makeText(getApplicationContext(), "Stvorili ste geo-ogradu radijusa " + geofenceRadius + "m", Toast.LENGTH_LONG).show();
-        }else {
+        } else {
             Toast.makeText(getApplicationContext(), "Upišite radijus. Nemoguće stvoriti             geo-ogradu", Toast.LENGTH_LONG).show();
         }
     }
 
 
     private static final long GEO_DURATION = 120 * 120 * 1000;
-    private static final String GEOFENCE_REQ_ID = "ID1";                            //ID ograde
-
-
+    private static final String GEOFENCE_REQ_ID = "ID1";                                   //ID ograde
 
 
     // napravi zahtjev za geo-ogradu
@@ -291,7 +290,6 @@ public class MainActivity extends AppCompatActivity
                 .addGeofence(geofence)
                 .build();
     }
-
 
 
     // dodaj napravljeni zahtjev za geo-ogradu na uređajnu listu za praćenje
@@ -308,24 +306,23 @@ public class MainActivity extends AppCompatActivity
         LocationServices.GeofencingApi
                 .removeGeofences(googleApiClient, createGeofencePendingIntent())
                 .setResultCallback(new ResultCallback<Status>() {
-            @Override
-            public void onResult(@NonNull Status status) {
-                if (status.isSuccess()) {
-                    removeGeofenceDraw();                                                                                       //obriši geo-ogradu
-                    Toast.makeText(getApplicationContext(), "Obrisali ste geo-ogradu", Toast.LENGTH_LONG).show();          //ispis poruke na ekranu
-                }
-            }
-        });
+                    @Override
+                    public void onResult(@NonNull Status status) {
+                        if (status.isSuccess()) {
+                            removeGeofenceDraw();                                                                              //obriši geo-ogradu
+                            Toast.makeText(getApplicationContext(), "Geo-ograda je obrisana", Toast.LENGTH_LONG).show();
+                        }
+                    }
+                });
     }
 
 
-    //poziva se kada je rezultat spreman
     @Override
     public void onResult(@NonNull Status status) {
-        Log.i(TAG, "onResult: " + status);
         if (status.isSuccess()) {
-            saveGeofence();
-            drawGeofence();
+            saveGeofence();                                                 //marker i radijus geo-ograde
+            drawGeofence();                                                 //crtanje kruga geo-ograde
+            Switch();                                                       //radio button
         }
     }
 
@@ -333,40 +330,66 @@ public class MainActivity extends AppCompatActivity
     private final String KEY_GEOFENCE_LON = "geo-ograda dužina";
 
 
-
-    // spremanje markera geo-ograde sa preferencama
+    // spremanje markera i radijusa geo-ograde pomoću SharedPreferences
     private void saveGeofence() {
-        SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);                                        //za spremanje manjih ključnih vrijednosti/podataka
+        SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPref.edit();
 
-        editor.putLong(KEY_GEOFENCE_LAT, Double.doubleToRawLongBits(geoFenceMarker.getPosition().latitude));
+        editor.putLong(KEY_GEOFENCE_LAT, Double.doubleToRawLongBits(geoFenceMarker.getPosition().latitude));        //spremanje markera geo-ograde
         editor.putLong(KEY_GEOFENCE_LON, Double.doubleToRawLongBits(geoFenceMarker.getPosition().longitude));
+
+        editor.putFloat("ograda", geofenceRadius);                                                                  //spremanje radijusa geo-ograde
         editor.apply();
     }
 
+    // učitavanje zadnjeg geo-lokacijskog markera
+    private void loadGeofenceMarker() {
+        SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);
+
+        if (sharedPref.contains(KEY_GEOFENCE_LAT) && sharedPref.contains(KEY_GEOFENCE_LON)) {
+            double lat = Double.longBitsToDouble(sharedPref.getLong(KEY_GEOFENCE_LAT, -1));
+            double lon = Double.longBitsToDouble(sharedPref.getLong(KEY_GEOFENCE_LON, -1));
+            LatLng latLng = new LatLng(lat, lon);
+            markerForGeofence(latLng);
+        }
+    }
 
 
+    // poziva se kada je klijent spojen na servis
+    @Override
+    public void onConnected(@Nullable Bundle bundle) {
+        getLastKnownLocation();                                                                                         //učitavanje korisnikove lokacije
+        loadGeofenceMarker();                                                                                           //učitavanje markera za geo-ogradu
+
+        SharedPreferences sharedPreferences = getSharedPreferences("stanje",MODE_PRIVATE);                        //učitavanje stanja radio button-a
+        switchSave.setChecked(sharedPreferences.getBoolean("radiobutton",true));
+
+        if(switchSave.isChecked()) {                                                                                     //učitavanje spremljene geo-ograde u ovisnosti o stanju radio buttonu-a
+            SharedPreferences sharedPreference = getPreferences(Context.MODE_PRIVATE);
+            float radius = sharedPreference.getFloat("ograda", geofenceRadius);
+            geofenceRadius = radius;
+            startGeofence();
+        }
+    }
 
     // brisanje kruga i markera geo-ograde
     private void removeGeofenceDraw() {
         Log.d(TAG, "removeGeofenceDraw()");
         if (geoFenceMarker != null)
             geoFenceMarker.remove();
-            if (geoFenceLimits != null)
-                geoFenceLimits.remove();
+        if (geoFenceLimits != null)
+            geoFenceLimits.remove();
     }
-
 
 
     // provjeri dopuštenje za pristup lokaciji
     private boolean checkPermission() {
         Log.d(TAG, "checkPermission()");
-        return (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)        // provjeri dopuštenje pristupa lokaciji ako još nije odobreno
+        return (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED);
     }
 
     private final int REQ_PERMISSION = 999;
-
 
 
     // pitaj za dopuštenje za pristup lokaciji
@@ -376,41 +399,36 @@ public class MainActivity extends AppCompatActivity
     }
 
 
-
-    // provjeri korisnikov odgovor na zahtjevanu dozvolu
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         Log.d(TAG, "onRequestPermissionsResult()");
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         switch (requestCode) {
             case REQ_PERMISSION: {
-                if (grantResults.length > 0
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    getLastKnownLocation();                                             // dozvoljeno, uzima zadnju lokaciju
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    getLastKnownLocation();                                                                 // dozvoljeno, uzima zadnju lokaciju
                 } else {
-                    permissionsDenied();                                                // odbijeno
+                    permissionsDenied();                                                                    // odbijeno
                 }
                 break;
             }
         }
     }
 
-    // aplikacija neće raditi bez dopuštenja (upozorenja)
+    // neće raditi bez dopuštenja
     private void permissionsDenied() {
         Log.w(TAG, "permissionsDenied()");
     }
 
 
-    // uzmi zadnju poznatu lokaciju
+    // uzmi zadnju lokaciju uređaja
     private void getLastKnownLocation() {
-        Log.d(TAG, "getLastKnownLocation()");
         if (checkPermission()) {                                                                 //ako je pristup lokaciji dozvoljen
             lastLocation = LocationServices.FusedLocationApi.getLastLocation(googleApiClient);   //uzmi korisnikovu lokaciju
             if (lastLocation != null) {
                 writeLastLocation();
-                startLocationUpdates();                                                          //započmi sa update-om lokacije
+                startLocationUpdates();
             } else {
-                Log.w(TAG, "No location retrieved yet");
                 startLocationUpdates();
             }
         } else
@@ -438,7 +456,7 @@ public class MainActivity extends AppCompatActivity
     private void markerLocation(LatLng latLng) {
         MarkerOptions markerOptions = new MarkerOptions()
                 .position(latLng)
-                .title(getCompleteAddressString(latLng.latitude,latLng.longitude))              //pretvaranje koordinate u adresu gdje se trenutačno nalazimo
+                .title(getCompleteAddressString(latLng.latitude, latLng.longitude))              //pretvaranje koordinate u adresu gdje se trenutačno nalazimo
                 .snippet("Ovdje se nalazim");
 
         if (map != null) {
@@ -453,7 +471,6 @@ public class MainActivity extends AppCompatActivity
     private final int FASTEST_INTERVAL = 900;                                                   //najveća brzina kojom aplikacija može ažurirati lokaciju
 
 
-
     // započmi ažuriranje lokacije
     private void startLocationUpdates() {
         locationRequest = LocationRequest.create()
@@ -462,47 +479,25 @@ public class MainActivity extends AppCompatActivity
                 .setFastestInterval(FASTEST_INTERVAL);
 
         if (checkPermission())
-            LocationServices.FusedLocationApi.requestLocationUpdates(googleApiClient, locationRequest, this);     //nakon odobrenja poziva ažuriranja za trenutnu lokaciju
+            LocationServices.FusedLocationApi.requestLocationUpdates(googleApiClient, locationRequest, this);
     }
 
 
-    // poziva se kada je klijent uključen/isključen sa usluge
-    @Override
-    public void onConnected(@Nullable Bundle bundle) {
-        getLastKnownLocation();
-        recoverGeofenceMarker();
-    }
-
-
-    // obnavljanje zadnjeg geo-lokacijskog markera
-    private void recoverGeofenceMarker() {
-        SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);
-
-        if (sharedPref.contains(KEY_GEOFENCE_LAT) && sharedPref.contains(KEY_GEOFENCE_LON)) {
-            double lat = Double.longBitsToDouble(sharedPref.getLong(KEY_GEOFENCE_LAT, -1));
-            double lon = Double.longBitsToDouble(sharedPref.getLong(KEY_GEOFENCE_LON, -1));
-            LatLng latLng = new LatLng(lat, lon);
-            markerForGeofence(latLng);
-            drawGeofence();
-        }
-    }
-
-    private Marker geoFenceMarker;                                                                   //marker za geo-ogradu
+    private Marker geoFenceMarker;
 
 
     // stvaranje markera za geo-ogradu
     private void markerForGeofence(LatLng latLng) {
-        Log.i(TAG, "markerForGeofence(" + latLng + ")");
         String title = latLng.latitude + ", " + latLng.longitude;
         MarkerOptions markerOptions = new MarkerOptions()                                           //definiranje opcija za marker geo-ograde
                 .position(latLng)
                 .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_CYAN))
                 .title(title)
-                .snippet((getCompleteAddressString(latLng.latitude,latLng.longitude)) );
+                .snippet((getCompleteAddressString(latLng.latitude, latLng.longitude)));
         if (map != null) {
             if (geoFenceMarker != null)
-                geoFenceMarker.remove();                                                            //ukloni zadnji marker geo-ograde
-            geoFenceMarker = map.addMarker(markerOptions);                                          //dodaj novi marker geo-ograde
+                geoFenceMarker.remove();
+            geoFenceMarker = map.addMarker(markerOptions);
 
         }
     }
@@ -510,11 +505,9 @@ public class MainActivity extends AppCompatActivity
     static final LatLng FERIT = new LatLng(45.556814, 18.695803);
 
 
-
     // poziv za povrat se zove kada je mapa spremna
     @Override
     public void onMapReady(GoogleMap googleMap) {
-        Log.d(TAG, "onMapReady()");
         map = googleMap;
         map.setOnMapLongClickListener(this);                                                    //poziva se kada je mapa dotaknuta
         map.setOnMarkerClickListener(this);                                                     //postavlja marker na određeno mjesto na mapi
@@ -527,7 +520,7 @@ public class MainActivity extends AppCompatActivity
     }
 
 
-    // poziva se kada korisnik klikne na mapu
+    // poziva se kada korisnik klikne na mapu i stvara marker za geo-ogradu
     @Override
     public void onMapLongClick(LatLng latLng) {
         Log.d(TAG, "onMapClick()");
@@ -556,7 +549,6 @@ public class MainActivity extends AppCompatActivity
     // povrati podatke od markera
     @Override
     public boolean onMarkerClick(Marker marker) {
-        Log.d(TAG, "onMarkerClickListener: " + marker.getPosition());
         return false;
     }
 
@@ -576,15 +568,14 @@ public class MainActivity extends AppCompatActivity
     }
 
 
-
     // pretraživanje mjesta sa dodanim markerom i zumiranje trenutne pozicije
-    public void geoLocate(View view) throws IOException {                                               //ako unos/ispis nije uspio bacit će IOException
-        EditText et = (EditText) findViewById(R.id.upišiMjesto);                                        //registrira xml 'EditText' sa datotekom 'et'
+    public void geoLocate(View view) throws IOException {
+        EditText et = (EditText) findViewById(R.id.upišiMjesto);
         String location = et.getText().toString();                                                      //getText() uzima ono što smo upisali, pretvara u string
         List<Address> addressList = null;
 
         if (location != null && !location.equals("")) {
-            Geocoder geocoder = new Geocoder(this);                                            //stvaranje objekta geocoder koji pretvara lokaciju u koordinate i obrnuto
+            Geocoder geocoder = new Geocoder(this);                                            //stvaranje objekta geocoder koji pretvara adresu u koordinate
             try {
                 addressList = geocoder.getFromLocationName(location, 1);
             } catch (IOException e) {
@@ -594,32 +585,30 @@ public class MainActivity extends AppCompatActivity
                 Address address = addressList.get(0);
                 LatLng latLng = new LatLng(address.getLatitude(), address.getLongitude());
 
-                String title1 = "Širina:" + latLng.latitude + " Dužina: " + latLng.longitude;
+                String title1 = "Širina:" + latLng.latitude + " Dužina: " + latLng.longitude;           //opcije markera za traženo mjesto
                 map.addMarker(new MarkerOptions()
                         .position(latLng)
                         .title(title1)
                         .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_VIOLET))
                         .snippet(address.getAddressLine(0)));
-                Toast.makeText(getApplicationContext(), "Mjesto koje ste tražili: "+location, Toast.LENGTH_LONG).show();
+                Toast.makeText(getApplicationContext(), "Mjesto koje ste tražili: " + location, Toast.LENGTH_LONG).show();
 
-                markerForGeofence(latLng);                                                                  //stvaranje ograde na traženom mjestu
+                markerForGeofence(latLng);                                                                  //marker ograde na traženom mjestu
                 map.animateCamera(CameraUpdateFactory.newLatLng(latLng));                                   //zumira trenutnu poziciju
-                float zoom = 15f;                                                                           //zumiranje mape određenog levela
+                float zoom = 15f;                                                                           //zumiranje mape određene razine
                 CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, zoom);                //pomiče mapu kod traženog mjesta
                 map.animateCamera(cameraUpdate);                                                            //mapa će se polako pomaknuti novim atributima
-
             } else {
                 Toast.makeText(getApplicationContext(), "Upišite dostupnu lokaciju!", Toast.LENGTH_LONG).show();
             }
         }
-        if(location.equals("")){
+        if (location.equals("")) {
             Toast.makeText(getApplicationContext(), "Niste upisali lokaciju!", Toast.LENGTH_LONG).show();
         }
     }
 
 
-
-    //pretvara koordinate u adresu gdje se trenutačno nalazimo
+    //pretvaranje koordinate u adresu trenutne lokacije
     private String getCompleteAddressString(double LATITUDE, double LONGITUDE) {
         String string = "";
         Geocoder geocoder = new Geocoder(this, Locale.getDefault());
@@ -640,11 +629,33 @@ public class MainActivity extends AppCompatActivity
         return string;
     }
 
+    //definiranje radio button-a
+    public void Switch(){
+        switchSave.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if(switchSave.isChecked()){
+                    SharedPreferences.Editor editor = getSharedPreferences("stanje", MODE_PRIVATE).edit();          //spremanje stanja radio button-a
+                    editor.putBoolean("radiobutton", true);
+                    editor.apply();
+
+                    Toast.makeText(getApplicationContext(), "Uključeno", Toast.LENGTH_LONG).show();
+                }else {
+                    SharedPreferences.Editor editor = getSharedPreferences("stanje", MODE_PRIVATE).edit();
+                    editor.putBoolean("radiobutton", false);
+                    editor.apply();
+                    geofenceRadius = 0;
+
+                    Toast.makeText(getApplicationContext(), "Isključeno", Toast.LENGTH_LONG).show();
+                }
+            }
+        });
+    }
 
 
-    // upozorenje za izlaz iz aplikacije, mogućnost odabira
+    // upozorenje za izlaz iz aplikacije
     @Override
-    public void onBackPressed(){
+    public void onBackPressed() {
         AlertDialog.Builder BackAlertDialog = new AlertDialog.Builder(MainActivity.this);
         BackAlertDialog.setTitle("Upozorenje");
         BackAlertDialog.setMessage("Jeste li sigurni da želite izaći iz aplikacije?");
@@ -662,7 +673,6 @@ public class MainActivity extends AppCompatActivity
             }
         });
         BackAlertDialog.show();
-        return;
     }
 
 }
