@@ -2,6 +2,7 @@ package com.geo_lokacijaograda;
 
 import android.Manifest;
 
+import android.graphics.Typeface;
 import android.support.v7.app.ActionBar;
 import android.app.PendingIntent;
 import android.content.Context;
@@ -20,6 +21,7 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -27,6 +29,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -55,8 +58,12 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+
+import static android.graphics.Color.argb;
+import static android.graphics.Color.rgb;
 
 public class MainActivity extends AppCompatActivity
         implements
@@ -106,7 +113,7 @@ public class MainActivity extends AppCompatActivity
         actionBar = getSupportActionBar();
         actionBar.setBackgroundDrawable(new ColorDrawable(Color.parseColor("#0176a0")));    //postavljanje boje pozadine
 
-        Toast.makeText(getApplicationContext(), "Dugo držite da biste stvorili marker", Toast.LENGTH_LONG).show();
+        Toast.makeText(getApplicationContext(), "Dugo držite da biste stvorili oznaku", Toast.LENGTH_LONG).show();
 
         mButton = (Button) findViewById(R.id.btnOK);
         mEdit = (EditText) findViewById(R.id.etRadijus);
@@ -119,13 +126,10 @@ public class MainActivity extends AppCompatActivity
 
     // započini sa procesom kreiranja geo-ograde
     private void startGeofence() {
-        Log.i(TAG, "startGeofence()");
         if (geoFenceMarker != null) {
             Geofence geofence = createGeofence(geoFenceMarker.getPosition(), geofenceRadius);
             GeofencingRequest geofenceRequest = createGeofenceRequest(geofence);
             addGeofence(geofenceRequest);
-        } else {
-            Log.e(TAG, "Geofence marker is null");
         }
     }
 
@@ -193,7 +197,6 @@ public class MainActivity extends AppCompatActivity
 
     // stvaranje GoogleApiClient-a
     private void createGoogleApi() {
-        Log.d(TAG, "createGoogleApi()");
         if (googleApiClient == null) {
             googleApiClient = new GoogleApiClient.Builder(this)
                     .addConnectionCallbacks(this)
@@ -238,16 +241,16 @@ public class MainActivity extends AppCompatActivity
         switch (item.getItemId()) {
             case R.id.stvori: {
                 conditionsMenu();
-                return true;
+                break;
             }
             case R.id.obriši: {
                 clearGeofence();
-                return true;
+                break;
             }
             case R.id.sakrij: {
                 map.clear();
                 Toast.makeText(getApplicationContext(), "Obrisali ste sve oznake", Toast.LENGTH_LONG).show();
-                return true;
+                break;
             }
             case R.id.mapaNormalna:
                 map.setMapType(GoogleMap.MAP_TYPE_NORMAL);
@@ -374,7 +377,6 @@ public class MainActivity extends AppCompatActivity
 
     // brisanje kruga i markera geo-ograde
     private void removeGeofenceDraw() {
-        Log.d(TAG, "removeGeofenceDraw()");
         if (geoFenceMarker != null)
             geoFenceMarker.remove();
         if (geoFenceLimits != null)
@@ -384,7 +386,6 @@ public class MainActivity extends AppCompatActivity
 
     // provjeri dopuštenje za pristup lokaciji
     private boolean checkPermission() {
-        Log.d(TAG, "checkPermission()");
         return (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED);
     }
@@ -394,14 +395,12 @@ public class MainActivity extends AppCompatActivity
 
     // pitaj za dopuštenje za pristup lokaciji
     private void askPermission() {
-        Log.d(TAG, "askPermission()");
         ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, REQ_PERMISSION);
     }
 
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        Log.d(TAG, "onRequestPermissionsResult()");
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         switch (requestCode) {
             case REQ_PERMISSION: {
@@ -498,11 +497,8 @@ public class MainActivity extends AppCompatActivity
             if (geoFenceMarker != null)
                 geoFenceMarker.remove();
             geoFenceMarker = map.addMarker(markerOptions);
-
         }
     }
-
-    static final LatLng FERIT = new LatLng(45.556814, 18.695803);
 
 
     // poziv za povrat se zove kada je mapa spremna
@@ -511,11 +507,6 @@ public class MainActivity extends AppCompatActivity
         map = googleMap;
         map.setOnMapLongClickListener(this);                                                    //poziva se kada je mapa dotaknuta
         map.setOnMarkerClickListener(this);                                                     //postavlja marker na određeno mjesto na mapi
-        map.addMarker(new MarkerOptions()                                                       //definiranje opcija markera
-                .position(FERIT)
-                .title("FERIT")
-                .snippet("Fakultet elektrotehnike, računarstva i inf. tehnologija"))
-                .setIcon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE));
         map.setMyLocationEnabled(true);
     }
 
@@ -523,7 +514,6 @@ public class MainActivity extends AppCompatActivity
     // poziva se kada korisnik klikne na mapu i stvara marker za geo-ogradu
     @Override
     public void onMapLongClick(LatLng latLng) {
-        Log.d(TAG, "onMapClick()");
         markerForGeofence(latLng);
     }
 
@@ -571,26 +561,22 @@ public class MainActivity extends AppCompatActivity
     // pretraživanje mjesta sa dodanim markerom i zumiranje trenutne pozicije
     public void geoLocate(View view) throws IOException {
         EditText et = (EditText) findViewById(R.id.upišiMjesto);
-        String location = et.getText().toString();                                                      //getText() uzima ono što smo upisali, pretvara u string
+        final String location = et.getText().toString();                                                      //getText() uzima ono što smo upisali, pretvara u string
         List<Address> addressList = null;
 
-        if (location != null && !location.equals("")) {
+        if (!location.isEmpty()) {
             Geocoder geocoder = new Geocoder(this);                                            //stvaranje objekta geocoder koji pretvara adresu u koordinate
-            try {
-                addressList = geocoder.getFromLocationName(location, 1);
-            } catch (IOException e) {
-                e.printStackTrace();                                                                   //služi za praćenje iznimke, ako se dogodi greška printstack će identificirati koja je metoda to izazvala
-            }
-            if (addressList != null && !addressList.isEmpty()) {
+            addressList = geocoder.getFromLocationName(location, 1);
+                if (!addressList.isEmpty()) {
                 Address address = addressList.get(0);
                 LatLng latLng = new LatLng(address.getLatitude(), address.getLongitude());
 
-                String title1 = "Širina:" + latLng.latitude + " Dužina: " + latLng.longitude;           //opcije markera za traženo mjesto
                 map.addMarker(new MarkerOptions()
                         .position(latLng)
-                        .title(title1)
+                        .title(latLng.latitude + ", " + latLng.longitude)
                         .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_VIOLET))
                         .snippet(address.getAddressLine(0)));
+
                 Toast.makeText(getApplicationContext(), "Mjesto koje ste tražili: " + location, Toast.LENGTH_LONG).show();
 
                 markerForGeofence(latLng);                                                                  //marker ograde na traženom mjestu
@@ -598,17 +584,14 @@ public class MainActivity extends AppCompatActivity
                 float zoom = 15f;                                                                           //zumiranje mape određene razine
                 CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(latLng, zoom);                //pomiče mapu kod traženog mjesta
                 map.animateCamera(cameraUpdate);                                                            //mapa će se polako pomaknuti novim atributima
-            } else {
-                Toast.makeText(getApplicationContext(), "Upišite dostupnu lokaciju!", Toast.LENGTH_LONG).show();
-            }
-        }
-        if (location.equals("")) {
-            Toast.makeText(getApplicationContext(), "Niste upisali lokaciju!", Toast.LENGTH_LONG).show();
-        }
+
+            } else {Toast.makeText(getApplicationContext(), "Upišite dostupnu lokaciju!", Toast.LENGTH_LONG).show();}
+
+        }else {Toast.makeText(getApplicationContext(), "Niste upisali lokaciju!", Toast.LENGTH_LONG).show();}
     }
 
 
-    //pretvaranje koordinate u adresu trenutne lokacije
+    //pretvaranje koordinata u adresu trenutne lokacije
     private String getCompleteAddressString(double LATITUDE, double LONGITUDE) {
         String string = "";
         Geocoder geocoder = new Geocoder(this, Locale.getDefault());
