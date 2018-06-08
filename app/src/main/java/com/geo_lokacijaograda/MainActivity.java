@@ -2,7 +2,6 @@ package com.geo_lokacijaograda;
 
 import android.Manifest;
 
-import android.graphics.Typeface;
 import android.support.v7.app.ActionBar;
 import android.app.PendingIntent;
 import android.content.Context;
@@ -21,7 +20,6 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -29,12 +27,9 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.EditText;
-import android.widget.LinearLayout;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.app.AlertDialog;
-import android.content.DialogInterface;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -58,12 +53,9 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.io.IOException;
-import java.util.ArrayList;
+
 import java.util.List;
 import java.util.Locale;
-
-import static android.graphics.Color.argb;
-import static android.graphics.Color.rgb;
 
 public class MainActivity extends AppCompatActivity
         implements
@@ -507,7 +499,6 @@ public class MainActivity extends AppCompatActivity
         map = googleMap;
         map.setOnMapLongClickListener(this);                                                    //poziva se kada je mapa dotaknuta
         map.setOnMarkerClickListener(this);                                                     //postavlja marker na određeno mjesto na mapi
-        map.setMyLocationEnabled(true);
     }
 
 
@@ -633,29 +624,6 @@ public class MainActivity extends AppCompatActivity
                 }
             }
         });
-    }
-
-
-    // upozorenje za izlaz iz aplikacije
-    @Override
-    public void onBackPressed() {
-        AlertDialog.Builder BackAlertDialog = new AlertDialog.Builder(MainActivity.this);
-        BackAlertDialog.setTitle("Upozorenje");
-        BackAlertDialog.setMessage("Jeste li sigurni da želite izaći iz aplikacije?");
-
-        BackAlertDialog.setPositiveButton("NE", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                dialog.cancel();
-            }
-        });
-        BackAlertDialog.setNegativeButton("DA", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                finish();
-            }
-        });
-        BackAlertDialog.show();
     }
 
 }

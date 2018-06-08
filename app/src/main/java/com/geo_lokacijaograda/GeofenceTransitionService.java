@@ -104,8 +104,6 @@ public class GeofenceTransitionService extends IntentService {
         return notificationBuilder.build();
     }
 
-
-
     private static String getErrorString(int errorCode) {
         switch (errorCode) {
             case GeofenceStatusCodes.GEOFENCE_NOT_AVAILABLE:
